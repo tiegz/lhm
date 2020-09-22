@@ -83,7 +83,7 @@ module Lhm
 
     def connect
       ActiveRecord::Base.establish_connection({
-        :adapter => 'mysql',
+        :adapter => 'postgresql',
         :host => @hostname,
         :port => @port,
         :username => @username,

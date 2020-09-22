@@ -36,12 +36,14 @@ module IntegrationHelper
 
   def ar_conn(port)
     ActiveRecord::Base.establish_connection(
-      :adapter  => defined?(Mysql2) ? 'mysql2' : 'mysql',
-      :host     => '127.0.0.1',
+      :adapter  => 'postgresql',
+      # :host     => 'localhost',
+      :pool     => 5,
+      :encoding => 'unicode',
       :database => 'lhm',
-      :username => 'root',
-      :port     => port,
-      :password => $password
+      # :username => 'root',
+      # :port     => port,
+      # :password => $password
     )
     ActiveRecord::Base.connection
   end
@@ -108,13 +110,13 @@ module IntegrationHelper
   end
 
   def table_create(fixture_name)
-    execute "drop table if exists `#{ fixture_name }`"
+    execute "drop table if exists #{ fixture_name }"
     execute fixture(fixture_name)
     table_read(fixture_name)
   end
 
   def table_rename(from_name, to_name)
-    execute "rename table `#{ from_name }` to `#{ to_name }`"
+    execute "rename table #{ from_name } to #{ to_name }"
   end
 
   def table_read(fixture_name)
@@ -135,7 +137,7 @@ module IntegrationHelper
   end
 
   def count_all(table)
-    query = "select count(*) from `#{ table }`"
+    query = "select count(*) from #{ table }"
     select_value(query).to_i
   end
 
@@ -149,9 +151,12 @@ module IntegrationHelper
     non_unique = type == :non_unique ? 1 : 0
 
     !!select_one(%Q<
-      show indexes in `#{ table_name }`
-     where key_name = '#{ key_name }'
-       and non_unique = #{ non_unique }
+      select tablename, indexname, indexdef 
+      from pg_indexes
+      where schemaname = 'public'
+      and tablename = '#{ table_name }''
+      and indexname = '#{ key_name }'
+      and indexef not like '%CREATE UNIQUE INDEX%'
     >)
   end
 

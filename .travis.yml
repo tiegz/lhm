@@ -1,6 +1,6 @@
 language: ruby
 before_script:
-  - "mysql -e 'create database lhm;'"
+  - "createdb lhm"
 rvm:
   - 2.0.0
   - 2.1

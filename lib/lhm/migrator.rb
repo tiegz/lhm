@@ -28,7 +28,7 @@ module Lhm
     # @example
     #
     #   Lhm.change_table(:users) do |m|
-    #     m.ddl("ALTER TABLE #{m.name} ADD COLUMN age INT(11)")
+    #     m.ddl("ALTER TABLE #{m.name} ADD COLUMN age integer")
     #   end
     #
     # @param [String] statement SQL alter statement
@@ -47,13 +47,13 @@ module Lhm
     # @example
     #
     #   Lhm.change_table(:users) do |m|
-    #     m.add_column(:comment, "VARCHAR(12) DEFAULT '0'")
+    #     m.add_column(:comment, "character varying(12) DEFAULT '0'")
     #   end
     #
     # @param [String] name Name of the column to add
     # @param [String] definition Valid SQL column definition
     def add_column(name, definition)
-      ddl('alter table `%s` add column `%s` %s' % [@name, name, definition])
+      ddl('alter table %s add column %s %s' % [@name, name, definition])
     end
 
     # Change an existing column to a new definition
@@ -61,13 +61,13 @@ module Lhm
     # @example
     #
     #   Lhm.change_table(:users) do |m|
-    #     m.change_column(:comment, "VARCHAR(12) DEFAULT '0' NOT NULL")
+    #     m.change_column(:comment, "character varying(12) DEFAULT '0' NOT NULL")
     #   end
     #
     # @param [String] name Name of the column to change
     # @param [String] definition Valid SQL column definition
     def change_column(name, definition)
-      ddl('alter table `%s` modify column `%s` %s' % [@name, name, definition])
+      ddl('alter table %s alter column %s %s' % [@name, name, definition])
     end
 
     # Rename an existing column.
@@ -87,7 +87,7 @@ module Lhm
       definition += ' NOT NULL' unless col[:is_nullable]
       definition += " DEFAULT #{@connection.quote(col[:column_default])}" if col[:column_default]
 
-      ddl('alter table `%s` change column `%s` `%s` %s' % [@name, old, nu, definition])
+      ddl('alter table %s change column %s %s %s' % [@name, old, nu, definition])
       @renames[old.to_s] = nu.to_s
     end
 
@@ -101,7 +101,7 @@ module Lhm
     #
     # @param [String] name Name of the column to delete
     def remove_column(name)
-      ddl('alter table `%s` drop `%s`' % [@name, name])
+      ddl('alter table %s drop %s' % [@name, name])
     end
 
     # Add an index to a table
@@ -161,7 +161,7 @@ module Lhm
       from_origin = @origin.indices.find { |_, cols| cols.map(&:to_sym) == columns }
       index_name ||= from_origin[0] unless from_origin.nil?
       index_name ||= idx_name(@origin.name, columns)
-      ddl('drop index `%s` on `%s`' % [index_name, @name])
+      ddl('drop index %s' % [index_name])
     end
 
     # Filter the data that is copied into the new table by the provided SQL.
@@ -170,7 +170,7 @@ module Lhm
     #
     # @example Add a conditions filter to the migration.
     #   Lhm.change_table(:sounds) do |m|
-    #     m.filter("inner join users on users.`id` = sounds.`user_id` and sounds.`public` = 1")
+    #     m.filter("inner join users on users.id = sounds.user_id and sounds.public = 1")
     #   end
     #
     # @param [ String ] sql The sql filter.
@@ -188,7 +188,7 @@ module Lhm
       end
 
       unless @origin.satisfies_id_column_requirement?
-        error('origin does not satisfy `id` key requirements')
+        error('origin does not satisfy id key requirements')
       end
 
       dest = @origin.destination_name
@@ -207,8 +207,9 @@ module Lhm
     end
 
     def destination_create
-      original    = %{CREATE TABLE `#{ @origin.name }`}
-      replacement = %{CREATE TABLE `#{ @origin.destination_name }`}
+      # TODO should we un-hardcore the 'public' schema?
+      original    = %{CREATE TABLE public.#{ @origin.name }}
+      replacement = %{CREATE TABLE public.#{ @origin.destination_name }}
       stmt = @origin.ddl.gsub(original, replacement)
       @connection.execute(tagged(stmt))
     end
@@ -222,7 +223,7 @@ module Lhm
       type = unique ? 'unique index' : 'index'
       index_name ||= idx_name(@origin.name, cols)
       parts = [type, index_name, @name, idx_spec(cols)]
-      'create %s `%s` on `%s` (%s)' % parts
+      'create %s %s on %s (%s)' % parts
     end
 
     def assert_valid_idx_name(index_name)

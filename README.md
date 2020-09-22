@@ -70,17 +70,17 @@ to your mysql instance:
 require 'lhm'
 
 ActiveRecord::Base.establish_connection(
-  :adapter => 'mysql',
+  :adapter => 'postgresql',
   :host => '127.0.0.1',
   :database => 'lhm'
 )
 
 # and migrate
 Lhm.change_table :users do |m|
-  m.add_column :arbitrary, "INT(12)"
-  m.add_column :locale, "VARCHAR(2) NOT NULL DEFAULT 'en'"
+  m.add_column :arbitrary, "integer"
+  m.add_column :locale, "character varying(2) NOT NULL DEFAULT 'en'"
   m.add_index  [:arbitrary_id, :created_at]
-  m.ddl("alter table %s add column flag tinyint(1)" % m.name)
+  m.ddl("alter table %s add column flag smallint" % m.name)
 end
 ```
 
@@ -93,9 +93,9 @@ require 'lhm'
 class MigrateUsers < ActiveRecord::Migration
   def self.up
     Lhm.change_table :users do |m|
-      m.add_column :arbitrary, "INT(12)"
+      m.add_column :arbitrary, "integer"
       m.add_index  [:arbitrary_id, :created_at]
-      m.ddl("alter table %s add column flag tinyint(1)" % m.name)
+      m.ddl("alter table %s add column flag smallint" % m.name)
     end
   end
 

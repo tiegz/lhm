@@ -23,6 +23,7 @@ module Lhm
     attr_reader :connection
 
     def initialize(migration, connection = nil)
+      throw "LockedSwitcher not supported yet!"
       @migration = migration
       @connection = connection
       @origin = migration.origin
@@ -35,34 +36,34 @@ module Lhm
 
     def switch
       [
-        "lock table `#{ @origin.name }` write, `#{ @destination.name }` write",
-        "alter table `#{ @origin.name }` rename `#{ @migration.archive_name }`",
-        "alter table `#{ @destination.name }` rename `#{ @origin.name }`",
-        'commit',
-        'unlock tables'
+        "begin",
+        "lock table #{ @origin.name } write, #{ @destination.name } write", # TODO do we need "IN EXCLUSIVE MODE" here?
+        "alter table #{ @origin.name } rename #{ @migration.archive_name }",
+        "alter table #{ @destination.name } rename #{ @origin.name }",
+        "commit"
       ]
     end
 
     def uncommitted
       [
-        'set @lhm_auto_commit = @@session.autocommit',
-        'set session autocommit = 0',
+        "set session lhm_auto_commit to autocommit;",
+        'set session autocommit = off',
         yield,
-        'set session autocommit = @lhm_auto_commit'
+        'set session autocommit = lhm_auto_commit'
       ].flatten
     end
 
     def validate
       unless @connection.table_exists?(@origin.name) &&
              @connection.table_exists?(@destination.name)
-        error "`#{ @origin.name }` and `#{ @destination.name }` must exist"
+        error "#{ @origin.name } and #{ @destination.name } must exist"
       end
     end
 
     private
 
     def revert
-      @connection.execute(tagged('unlock tables'))
+      @connection.execute(tagged('commit work'))
     end
 
     def execute

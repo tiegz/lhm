@@ -23,8 +23,8 @@ describe Lhm::AtomicSwitcher do
       @switcher.
         statements.
         must_equal([
-          "rename table `origin` to `#{ @migration.archive_name }`, " \
-          '`destination` to `origin`'
+          "rename table origin to #{ @migration.archive_name }, " \
+          'destination to origin'
         ])
     end
   end

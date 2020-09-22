@@ -68,7 +68,7 @@ describe Lhm::Table do
       end
 
       it 'should parse column type in show create table' do
-        @table.columns['username'][:type].must_equal('varchar(255)')
+        @table.columns['username'][:type].must_equal('character varying(255)')
       end
 
       it 'should parse column metadata' do

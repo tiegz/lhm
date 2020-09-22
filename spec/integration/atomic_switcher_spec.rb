@@ -28,7 +28,7 @@ describe Lhm::AtomicSwitcher do
     end
 
     it 'should retry on lock wait timeouts' do
-      skip 'This spec only works with mysql2' unless defined? Mysql2
+      skip 'This spec only works with pg' unless defined? PG
 
       without_verbose do
         queue = Queue.new
@@ -51,7 +51,7 @@ describe Lhm::AtomicSwitcher do
     end
 
     it 'should give up on lock wait timeouts after MAX_RETRIES' do
-      skip 'This spec only works with mysql2' unless defined? Mysql2
+      skip 'This spec only works with pg' unless defined? PG
 
       without_verbose do
         queue = Queue.new

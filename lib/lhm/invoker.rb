@@ -25,15 +25,10 @@ module Lhm
     end
 
     def set_session_lock_wait_timeouts
-      global_innodb_lock_wait_timeout = @connection.select_one("SHOW GLOBAL VARIABLES LIKE 'innodb_lock_wait_timeout'")
-      global_lock_wait_timeout = @connection.select_one("SHOW GLOBAL VARIABLES LIKE 'lock_wait_timeout'")
-
-      if global_innodb_lock_wait_timeout
-        @connection.execute("SET SESSION innodb_lock_wait_timeout=#{global_innodb_lock_wait_timeout['Value'].to_i + LOCK_WAIT_TIMEOUT_DELTA}")
-      end
+      global_lock_wait_timeout = @connection.select_one("SHOW lock_timeout")
 
       if global_lock_wait_timeout
-        @connection.execute("SET SESSION lock_wait_timeout=#{global_lock_wait_timeout['Value'].to_i + LOCK_WAIT_TIMEOUT_DELTA}")
+        @connection.execute("SET LOCAL lock_timeout=#{[global_lock_wait_timeout['lock_timeout'].to_i + LOCK_WAIT_TIMEOUT_DELTA, 0].max}")
       end
     end
 
@@ -47,6 +42,7 @@ module Lhm
         if options[:atomic_switch]
           AtomicSwitcher.new(migration, @connection).run
         else
+          throw "LockedSwitcher not fully implemented for Postgres yet."
           LockedSwitcher.new(migration, @connection).run
         end
       end
@@ -58,14 +54,11 @@ module Lhm
       Lhm.logger.info "Starting LHM run on table=#{@migrator.name}"
 
       unless options.include?(:atomic_switch)
-        if supports_atomic_switch?
-          options[:atomic_switch] = true
-        else
-          raise Error.new(
-            "Using mysql #{version_string}. You must explicitly set " \
-            'options[:atomic_switch] (re SqlHelper#supports_atomic_switch?)')
-        end
+        options[:atomic_switch] = true
       end
+
+      # TODO: implement LockedSwitcher and remove this line.
+      options[:atomic_switch] = true
 
       if options[:throttler]
         options[:throttler] = Throttler::Factory.create_throttler(options[:throttler])

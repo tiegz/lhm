@@ -46,6 +46,6 @@ describe Lhm::Intersection do
   end
 
   def varchar
-    { :metadata => 'VARCHAR(255)' }
+    { :metadata => 'character varying(255)' }
   end
 end

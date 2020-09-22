@@ -52,19 +52,23 @@ module Lhm
       [(@next_to_insert + stride - 1), @limit].min
     end
 
+    # TODO: on conflict needs a constraint to be sepcific, but we can't rely on there
+    # being a unique constraint being on id/primary key. Is it possible this could overwrite
+    # a record while chunking that's already in the db?
     def copy(lowest, highest)
-      "insert ignore into `#{ destination_name }` (#{ destination_columns }) " \
-      "select #{ origin_columns } from `#{ origin_name }` " \
-      "#{ conditions } `#{ origin_name }`.`id` between #{ lowest } and #{ highest }"
+      "insert into #{ destination_name } (#{ destination_columns }) " \
+      "select #{ origin_columns } from #{ origin_name } " \
+      "#{ conditions } #{ origin_name }.id between #{ lowest } and #{ highest }" \
+      "on conflict do nothing"
     end
 
     def select_start
-      start = connection.select_value("select min(id) from `#{ origin_name }`")
+      start = connection.select_value("select min(id) from #{ origin_name }")
       start ? start.to_i : nil
     end
 
     def select_limit
-      limit = connection.select_value("select max(id) from `#{ origin_name }`")
+      limit = connection.select_value("select max(id) from #{ origin_name }")
       limit ? limit.to_i : nil
     end
 

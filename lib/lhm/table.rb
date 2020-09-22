@@ -17,7 +17,7 @@ module Lhm
 
     def satisfies_id_column_requirement?
       !!((id = columns['id']) &&
-        id[:type] =~ /(bigint|int)\(\d+\)/)
+        id[:type] =~ /(bigint|integer)/) # TODO: is the (\d+\) from the original needed?
     end
 
     def destination_name
@@ -33,26 +33,51 @@ module Lhm
 
       def initialize(table_name, connection)
         @table_name = table_name.to_s
-        @schema_name = connection.current_database
+        @schema_name = 'public' # connection.current_database (NB in Postgres the schema will be a part of the db, not the db itself)
+        @database_name = connection.current_database
         @connection = connection
       end
 
       def ddl
-        sql = "show create table `#{ @table_name }`"
-        specification = nil
-        @connection.execute(sql).each { |row| specification = row.last }
-        specification
+        # TODO is there a better way to do this?
+        "CREATE TABLE #{@schema_name}.#{@table_name} (\n" +
+        @connection.select_all(%Q{
+          select table_schema, table_name, column_name, data_type, is_nullable, column_default, collation_name
+          from information_schema.columns
+          where table_name = '#{ @table_name }';
+        }).map { |col| 
+          [
+            "  ", 
+            col["column_name"], 
+            col["data_type"] =~ /timestamp without time zone/ ? "timestamp" : col["data_type"], 
+            col["is_nullable"] ? "" : "NOT NULL", 
+            col["column_default"] ? "DEFAULT #{col["column_default"]}" : "DEFAULT NULL"
+          ].join(" ")
+        }.join(",\n") +
+      "\n)"
       end
+
+#       CREATE TABLE public.users (
+#   id serial primary key NOT NULL,
+#   reference integer DEFAULT NULL,
+#   username character varying(255) DEFAULT NULL,
+#   groupname character varying(255) DEFAULT 'Superfriends',
+#   created_at timestamp DEFAULT NULL,
+#   comment character varying(20) DEFAULT NULL,
+#   description text,
+#   UNIQUE(reference)
+# );
+
 
       def parse
         schema = read_information_schema
 
         Table.new(@table_name, extract_primary_key(schema), ddl).tap do |table|
           schema.each do |defn|
-            column_name    = struct_key(defn, 'COLUMN_NAME')
-            column_type    = struct_key(defn, 'COLUMN_TYPE')
-            is_nullable    = struct_key(defn, 'IS_NULLABLE')
-            column_default = struct_key(defn, 'COLUMN_DEFAULT')
+            column_name    = struct_key(defn, 'column_name')
+            column_type    = struct_key(defn, 'data_type')
+            is_nullable    = struct_key(defn, 'is_nullable')
+            column_default = struct_key(defn, 'column_default')
 
             table.columns[defn[column_name]] = {
               :type => defn[column_type],
@@ -79,18 +104,22 @@ module Lhm
       end
 
       def read_indices
+        # TODO is it safe to use _pkey suffix as an indicator of primary key index?
         @connection.select_all %Q{
-          show indexes from `#{ @schema_name }`.`#{ @table_name }`
-         where key_name != 'PRIMARY'
+          select * from pg_indexes
+            where schemaname = 'public'
+            and tablename = '#{ @table_name }'
+            and indexname != '#{ @table_name }_pkey'
         }
       end
 
       def extract_indices(indices)
         indices.
           map do |row|
-            key_name = struct_key(row, 'Key_name')
-            column_name = struct_key(row, 'COLUMN_NAME')
-            [row[key_name], row[column_name]]
+            key_name = struct_key(row, 'indexname')
+            # TODO a more reliable way might be querying information_schema.table_constraints/key_column_usage instead, and aggregating by index to get colum names.
+            column_name = struct_key(row, 'indexdef')
+            [row[key_name], "(" + row[column_name].split('(').last.split(')').first.split(',').map(&:strip).join(', ') + ')']
           end.
           inject(Hash.new { |h, k| h[k] = [] }) do |memo, (idx, column)|
             memo[idx] << column

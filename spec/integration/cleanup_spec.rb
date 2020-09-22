@@ -12,7 +12,7 @@ describe Lhm, 'cleanup' do
       table_create(:users)
       simulate_failed_migration do
         Lhm.change_table(:users, :atomic_switch => false) do |t|
-          t.add_column(:logins, "INT(12) DEFAULT '0'")
+          t.add_column(:logins, "integer DEFAULT '0'")
           t.add_index(:logins)
         end
       end

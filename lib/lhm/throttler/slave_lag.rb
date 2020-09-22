@@ -74,7 +74,7 @@ module Lhm
       end
 
       def slave_connection(slave)
-        adapter_method = defined?(Mysql2) ? 'mysql2_connection' : 'mysql_connection'
+        'postgresql_connection'
         config = ActiveRecord::Base.connection_pool.spec.config.dup
         config[:host] = slave
         ActiveRecord::Base.send(adapter_method, config)
@@ -82,8 +82,8 @@ module Lhm
 
       # This method fetch the Seconds_Behind_Master, when exec_query is no available, on AR 2.3.
       def fetch_slave_seconds(result)
-        unless result.is_a? Mysql::Result
-          Lhm.logger.info "Not a Mysql::Result from the slave assuming 0 lag"
+        unless result.is_a? PG::Result
+          Lhm.logger.info "Not a PG::Result from the slave assuming 0 lag"
           return 0
         end
 

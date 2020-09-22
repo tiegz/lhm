@@ -19,19 +19,19 @@ describe Lhm::Entangler do
 
   describe 'activation' do
     before(:each) do
-      @origin.columns['info'] = { :type => 'varchar(255)' }
-      @origin.columns['tags'] = { :type => 'varchar(255)' }
+      @origin.columns['info'] = { :type => 'character varying(255)' }
+      @origin.columns['tags'] = { :type => 'character varying(255)' }
 
-      @destination.columns['info'] = { :type => 'varchar(255)' }
-      @destination.columns['tags'] = { :type => 'varchar(255)' }
+      @destination.columns['info'] = { :type => 'character varying(255)' }
+      @destination.columns['tags'] = { :type => 'character varying(255)' }
     end
 
     it 'should create insert trigger to destination table' do
       ddl = %Q{
-        create trigger `lhmt_ins_origin`
-        after insert on `origin` for each row
-        replace into `destination` (`info`, `tags`) /* large hadron migration */
-        values (`NEW`.`info`, `NEW`.`tags`)
+        create trigger lhmt_ins_origin
+        after insert on origin for each row
+        replace into destination (info, tags) /* large hadron migration */
+        values (NEW.info, NEW.tags)
       }
 
       @entangler.entangle.must_include strip(ddl)
@@ -39,10 +39,10 @@ describe Lhm::Entangler do
 
     it 'should create an update trigger to the destination table' do
       ddl = %Q{
-        create trigger `lhmt_upd_origin`
-        after update on `origin` for each row
-        replace into `destination` (`info`, `tags`) /* large hadron migration */
-        values (`NEW`.`info`, `NEW`.`tags`)
+        create trigger lhmt_upd_origin
+        after update on origin for each row
+        replace into destination (info, tags) /* large hadron migration */
+        values (NEW.info, NEW.tags)
       }
 
       @entangler.entangle.must_include strip(ddl)
@@ -50,10 +50,10 @@ describe Lhm::Entangler do
 
     it 'should create a delete trigger to the destination table' do
       ddl = %Q{
-        create trigger `lhmt_del_origin`
-        after delete on `origin` for each row
-        delete ignore from `destination` /* large hadron migration */
-        where `destination`.`id` = OLD.`id`
+        create trigger lhmt_del_origin
+        after delete on origin for each row
+        delete ignore from destination /* large hadron migration */
+        where destination.id = OLD.id
       }
 
       @entangler.entangle.must_include strip(ddl)
@@ -77,15 +77,15 @@ describe Lhm::Entangler do
 
   describe 'removal' do
     it 'should remove insert trigger' do
-      @entangler.untangle.must_include('drop trigger if exists `lhmt_ins_origin`')
+      @entangler.untangle.must_include('drop trigger if exists lhmt_ins_origin')
     end
 
     it 'should remove update trigger' do
-      @entangler.untangle.must_include('drop trigger if exists `lhmt_upd_origin`')
+      @entangler.untangle.must_include('drop trigger if exists lhmt_upd_origin')
     end
 
     it 'should remove delete trigger' do
-      @entangler.untangle.must_include('drop trigger if exists `lhmt_del_origin`')
+      @entangler.untangle.must_include('drop trigger if exists lhmt_del_origin')
     end
   end
 end

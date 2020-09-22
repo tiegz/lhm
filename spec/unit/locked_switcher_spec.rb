@@ -40,11 +40,11 @@ describe Lhm::LockedSwitcher do
       @switcher.
         switch.
         must_equal([
-          'lock table `origin` write, `destination` write',
-          "alter table `origin` rename `#{ @migration.archive_name }`",
-          'alter table `destination` rename `origin`',
-          'commit',
-          'unlock tables'
+          'begin',
+          'lock table origin write, destination write',
+          "alter table origin rename #{ @migration.archive_name }",
+          'alter table destination rename origin',
+          'commit'
         ])
     end
   end

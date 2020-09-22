@@ -27,6 +27,6 @@ describe Lhm::SqlHelper do
   it 'should quote column names in index specification' do
     Lhm::SqlHelper.
       idx_spec(['title(10)', 'album']).
-      must_equal('`title`(10), `album`')
+      must_equal('title(10), album')
   end
 end

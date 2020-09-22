@@ -18,7 +18,7 @@ describe Lhm::Chunker do
     end
 
     it 'should copy 1  rows from origin to destination even if the id of the single row does not start at 1' do
-      execute("insert into origin set id = 1001 ")
+      execute("insert into origin (id) values (1001)")
       printer = Lhm::Printer::Base.new
 
       def printer.notify(*) ;end
@@ -33,7 +33,7 @@ describe Lhm::Chunker do
     end
 
     it 'should copy 23 rows from origin to destination' do
-      23.times { |n| execute("insert into origin set id = '#{ n * n + 23 }'") }
+      23.times { |n| execute("insert into origin (id) values ('#{ n * n + 23 }')") }
 
       printer = MiniTest::Mock.new
       5.times { printer.expect(:notify, :return_value, [Fixnum, Fixnum]) }
@@ -51,7 +51,7 @@ describe Lhm::Chunker do
     end
 
     it 'should copy 23 rows from origin to destination with slave lag based throttler' do
-      23.times { |n| execute("insert into origin set id = '#{ n * n + 23 }'") }
+      23.times { |n| execute("insert into origin (id) values ('#{ n * n + 23 }')") }
 
       printer = MiniTest::Mock.new
       5.times { printer.expect(:notify, :return_value, [Fixnum, Fixnum]) }
@@ -69,7 +69,7 @@ describe Lhm::Chunker do
     end
 
     it 'should throttle work stride based on slave lag' do
-      5.times { |n| execute("insert into origin set id = '#{ (n * n) + 1 }'") }
+      5.times { |n| execute("insert into origin (id) values ('#{ (n * n) + 1 }')") }
 
       printer = MiniTest::Mock.new
       15.times { printer.expect(:notify, :return_value, [Fixnum, Fixnum]) }
@@ -94,7 +94,7 @@ describe Lhm::Chunker do
     end
 
     it 'should detect a single slave with no lag in the default configuration' do
-      5.times { |n| execute("insert into origin set id = '#{ (n * n) + 1 }'") }
+      5.times { |n| execute("insert into origin (id) values ('#{ (n * n) + 1 }')") }
 
       printer = MiniTest::Mock.new
       15.times { printer.expect(:notify, :return_value, [Fixnum, Fixnum]) }
@@ -108,7 +108,7 @@ describe Lhm::Chunker do
 
       if master_slave_mode?
         def throttler.slave_connection(slave)
-          adapter_method = defined?(Mysql2) ? 'mysql2_connection' : 'mysql_connection'
+          adapter_method = 'postgresql_connection'
           config = ActiveRecord::Base.connection_pool.spec.config.dup
           config[:host] = slave
           config[:port] = 3307

@@ -12,11 +12,7 @@ $spec = $project.join('spec')
 $fixtures = $spec.join('fixtures')
 
 require 'active_record'
-begin
-  require 'mysql2'
-rescue LoadError
-  require 'mysql'
-end
+require 'pg'
 
 logger = Logger.new STDOUT
 logger.level = Logger::WARN

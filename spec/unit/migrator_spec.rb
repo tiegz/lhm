@@ -19,7 +19,7 @@ describe Lhm::Migrator do
       @creator.add_index(:a)
 
       @creator.statements.must_equal([
-        'create index `index_alt_on_a` on `lhmn_alt` (`a`)'
+        'create index index_alt_on_a on lhmn_alt (a)'
       ])
     end
 
@@ -27,7 +27,7 @@ describe Lhm::Migrator do
       @creator.add_index([:a, :b])
 
       @creator.statements.must_equal([
-        'create index `index_alt_on_a_and_b` on `lhmn_alt` (`a`, `b`)'
+        'create index index_alt_on_a_and_b on lhmn_alt (a, b)'
       ])
     end
 
@@ -35,7 +35,7 @@ describe Lhm::Migrator do
       @creator.add_index(['a(10)', 'b'])
 
       @creator.statements.must_equal([
-        'create index `index_alt_on_a_and_b` on `lhmn_alt` (`a`(10), `b`)'
+        'create index index_alt_on_a_and_b on lhmn_alt (a(10), b)'
       ])
     end
 
@@ -43,7 +43,7 @@ describe Lhm::Migrator do
       @creator.add_index([:a, :b], :custom_index_name)
 
       @creator.statements.must_equal([
-        'create index `custom_index_name` on `lhmn_alt` (`a`, `b`)'
+        'create index custom_index_name on lhmn_alt (a, b)'
       ])
     end
 
@@ -57,7 +57,7 @@ describe Lhm::Migrator do
       @creator.add_unique_index(['a(5)', :b])
 
       @creator.statements.must_equal([
-        'create unique index `index_alt_on_a_and_b` on `lhmn_alt` (`a`(5), `b`)'
+        'create unique index index_alt_on_a_and_b on lhmn_alt (a(5), b)'
       ])
     end
 
@@ -65,7 +65,7 @@ describe Lhm::Migrator do
       @creator.add_unique_index([:a, :b], :custom_index_name)
 
       @creator.statements.must_equal([
-        'create unique index `custom_index_name` on `lhmn_alt` (`a`, `b`)'
+        'create unique index custom_index_name on lhmn_alt (a, b)'
       ])
     end
 
@@ -79,7 +79,7 @@ describe Lhm::Migrator do
       @creator.remove_index(['b', 'a'])
 
       @creator.statements.must_equal([
-        'drop index `index_alt_on_b_and_a` on `lhmn_alt`'
+        'drop index index_alt_on_b_and_a on lhmn_alt'
       ])
     end
 
@@ -87,17 +87,17 @@ describe Lhm::Migrator do
       @creator.remove_index([:a, :b], :custom_index_name)
 
       @creator.statements.must_equal([
-        'drop index `custom_index_name` on `lhmn_alt`'
+        'drop index custom_index_name on lhmn_alt'
       ])
     end
   end
 
   describe 'column changes' do
     it 'should add a column' do
-      @creator.add_column('logins', 'INT(12)')
+      @creator.add_column('logins', 'integer')
 
       @creator.statements.must_equal([
-        'alter table `lhmn_alt` add column `logins` INT(12)'
+        'alter table lhmn_alt add column logins integer'
       ])
     end
 
@@ -105,42 +105,42 @@ describe Lhm::Migrator do
       @creator.remove_column('logins')
 
       @creator.statements.must_equal([
-        'alter table `lhmn_alt` drop `logins`'
+        'alter table lhmn_alt drop logins'
       ])
     end
 
     it 'should change a column' do
-      @creator.change_column('logins', 'INT(11)')
+      @creator.change_column('logins', 'integer')
 
       @creator.statements.must_equal([
-        'alter table `lhmn_alt` modify column `logins` INT(11)'
+        'alter table lhmn_alt modify column logins integer'
       ])
     end
   end
 
   describe 'direct changes' do
     it 'should accept a ddl statement' do
-      @creator.ddl('alter table `%s` add column `f` tinyint(1)' % @creator.name)
+      @creator.ddl('alter table %s add column f smallint' % @creator.name)
 
       @creator.statements.must_equal([
-        'alter table `lhmn_alt` add column `f` tinyint(1)'
+        'alter table lhmn_alt add column f smallint'
       ])
     end
   end
 
   describe 'multiple changes' do
     it 'should add two columns' do
-      @creator.add_column('first', 'VARCHAR(64)')
-      @creator.add_column('last', 'VARCHAR(64)')
+      @creator.add_column('first', 'character varying(64')
+      @creator.add_column('last', 'character varying(64)')
       @creator.statements.length.must_equal(2)
 
       @creator.
         statements[0].
-        must_equal('alter table `lhmn_alt` add column `first` VARCHAR(64)')
+        must_equal('alter table lhmn_alt add column first character varying(64)')
 
       @creator.
         statements[1].
-        must_equal('alter table `lhmn_alt` add column `last` VARCHAR(64)')
+        must_equal('alter table lhmn_alt add column last character varying(64)')
     end
   end
 end

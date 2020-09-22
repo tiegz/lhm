@@ -1,6 +1,6 @@
-CREATE TABLE `destination` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `destination` int(11) DEFAULT NULL,
-  `common` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8
+CREATE TABLE destination (
+  id serial NOT NULL,
+  destination integer DEFAULT NULL,
+  common character varying(255) DEFAULT NULL,
+  PRIMARY KEY (id)
+) 

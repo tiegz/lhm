@@ -12,9 +12,9 @@ require 'logger'
 # @example
 #
 #   Lhm.change_table(:users) do |m|
-#     m.add_column(:arbitrary, "INT(12)")
+#     m.add_column(:arbitrary, "integer")
 #     m.add_index([:arbitrary, :created_at])
-#     m.ddl("alter table %s add column flag tinyint(1)" % m.name)
+#     m.ddl("alter table %s add column flag smallint" % m.name)
 #   end
 #
 module Lhm
@@ -37,8 +37,6 @@ module Lhm
   #   Primary Key position at which to stop copying chunks
   # @option options [Boolean] :atomic_switch
   #   Use atomic switch to rename tables (defaults to: true)
-  #   If using a version of mysql affected by atomic switch bug, LHM forces user
-  #   to set this option (see SqlHelper#supports_atomic_switch?)
   # @yield [Migrator] Yielded Migrator object records the changes
   # @return [Boolean] Returns true if the migration finishes
   # @raise [Error] Raises Lhm::Error in case of a error and aborts the migration
@@ -57,7 +55,7 @@ module Lhm
   # @option options [Time] :until
   #   Filter to only remove tables up to specified time (defaults to: nil)
   def cleanup(run = false, options = {})
-    lhm_tables = connection.select_values('show tables').select { |name| name =~ /^lhm(a|n)_/ }
+    lhm_tables = connection.select_values("select tablename from pg_catalog.pg_tables where schemaname='public'").select { |name| name =~ /^lhm(a|n)_/ }
     if options[:until]
       lhm_tables.select! do |table|
         table_date_time = Time.strptime(table, 'lhma_%Y_%m_%d_%H_%M_%S')
@@ -65,15 +63,18 @@ module Lhm
       end
     end
 
-    lhm_triggers = connection.select_values('show triggers').collect do |trigger|
+    lhm_triggers = connection.select_values('select * from pg_trigger').collect do |trigger|
       trigger.respond_to?(:trigger) ? trigger.trigger : trigger
     end.select { |name| name =~ /^lhmt/ }
 
     if run
       lhm_triggers.each do |trigger|
-        connection.execute("drop trigger if exists #{trigger}")
+        connection.execute("drop trigger if exists #{trigger} on table #{table}")
       end
       lhm_tables.each do |table|
+        connection.execute("drop function if exists on_insert_#{table}()")
+        connection.execute("drop function if exists on_update_#{table}()")
+        connection.execute("drop function if exists on_delete_#{table}()")
         connection.execute("drop table if exists #{table}")
       end
       true

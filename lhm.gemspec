@@ -10,9 +10,9 @@ Gem::Specification.new do |s|
   s.version       = Lhm::VERSION
   s.licenses      = ['BSD-3-Clause']
   s.platform      = Gem::Platform::RUBY
-  s.authors       = ['SoundCloud', 'Rany Keddo', 'Tobias Bielohlawek', 'Tobias Schmidt']
+  s.authors       = ['SoundCloud', 'Rany Keddo', 'Tobias Bielohlawek', 'Tobias Schmidt', 'Tieg Zaharia']
   s.email         = %q{rany@soundcloud.com, tobi@soundcloud.com, ts@soundcloud.com}
-  s.summary       = %q{online schema changer for mysql}
+  s.summary       = %q{online schema changer for ~mysql~ postgres}
   s.description   = %q{Migrate large tables without downtime by copying to a temporary table in chunks. The old table is not dropped. Instead, it is moved to timestamp_table_name for verification.}
   s.homepage      = %q{http://github.com/soundcloud/lhm}
   s.files         = `git ls-files`.split("\n")
@@ -23,5 +23,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'minitest'
   s.add_development_dependency 'rake'
   s.add_development_dependency 'activerecord'
-  s.add_development_dependency 'mysql'
+  s.add_development_dependency 'pg'
 end

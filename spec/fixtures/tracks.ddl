@@ -1,5 +1,5 @@
-CREATE TABLE `tracks` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `public` int(4) DEFAULT 0,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8
+CREATE TABLE tracks (
+  id serial NOT NULL,
+  public integer DEFAULT 0,
+  PRIMARY KEY (id)
+)
